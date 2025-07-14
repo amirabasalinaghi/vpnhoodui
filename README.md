@@ -33,7 +33,13 @@ Keep this URL for yourself and don't share your username and password.
 
 ``docker exec -d MyVpnHoodServer  bash /app/web/runui.sh``
 
-After running the server you can access the interface through: 
+After running the server you can access the interface through:
 [yourip]:8000/vpnhoodui
+
+## Sharing tokens to mobile
+
+Click the **Share** button next to a token to open a modal dialog. A QR code and
+direct link will be shown so that you can easily open the token page on your
+phone. The QR code encodes a link without revealing the token in the URL.
 
 

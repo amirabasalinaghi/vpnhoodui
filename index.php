@@ -5,6 +5,11 @@ $baseUrl = getenv('BASE_URL');
 $baseUrlIp = 'http://' . $_SERVER["SERVER_NAME"] . ':' . $_SERVER["SERVER_PORT"];
 
 checkTheAllowedUri($baseUrl);
+
+if (isset($_GET['share'])) {
+    shareTokenPage($_GET['share'], $baseUrl, $baseUrlIp);
+}
+
 login();
 
 if (isset($_GET['printtoken'])) {
@@ -13,6 +18,8 @@ if (isset($_GET['printtoken'])) {
     gen($_GET['tokenName'] ?? '', $_GET['expire'] ?? null);
 } elseif (isset($_GET['qrcode'])) {
     printQrCode($_GET['qrcode']);
+} elseif (isset($_GET['shareqr'])) {
+    printShareQrCode($_GET['shareqr'], $baseUrl, $baseUrlIp);
 } elseif (isset($_GET['delete'])) {
     delete($_GET['delete']);
 } else {
@@ -46,6 +53,29 @@ function printQrCode($id)
     require_once __DIR__ . '/lib/phpqrcode/qrlib.php';
     header('Content-Type: image/svg+xml');
     echo QRcode::svg($token, false, QR_ECLEVEL_L, 3, 4, false);
+    die();
+}
+
+function printShareQrCode($id, $baseUrl, $baseUrlIp)
+{
+    $link = $baseUrlIp . $baseUrl . '?share=' . urlencode($id);
+    require_once __DIR__ . '/lib/phpqrcode/qrlib.php';
+    header('Content-Type: image/svg+xml');
+    echo QRcode::svg($link, false, QR_ECLEVEL_L, 3, 4, false);
+    die();
+}
+
+function shareTokenPage($id, $baseUrl, $baseUrlIp)
+{
+    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
+    $token = getToken($output);
+    echo getHtmlHeader() . '<body><div class="container text-center mt-4">'
+        . '<h3>VPN Token</h3>'
+        . '<p id="shareToken" class="mb-3">' . htmlspecialchars($token) . '</p>'
+        . '<p class="text-muted">Tap and hold to copy on mobile devices.</p>'
+        . '</div>'
+        . '<script>function copy(){navigator.clipboard.writeText(document.getElementById("shareToken").innerText);alert("Copied");}</script>'
+        . '</body></html>';
     die();
 }
 
@@ -132,7 +162,8 @@ function getBootstrapCard($tokenInfo, $id)
                                         <p class="card-text">Expires: <strong>' . $tokenInfo['expiration'] . '</strong></p>
                                         <p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
                                         <a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
-					<a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
+                                        <button type="button" class="btn btn-secondary ms-1" onclick="openShareModal(\'' . $id . '\')">Share</button>
+                                        <a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
                                         <div class="card-text" >
                                             <div class="spinner-border text-primary d-none" id="' . $id . '_spinner" role="status">
                             <span class="sr-only"></span>
@@ -238,8 +269,23 @@ function getHtmlBodyAndTags($baseUrl, $baseUrlIp)
         <div class="row">
                 <div class="col-sm-6">
                         ' . showCardsForTokens() . '
-		</div>
-	</div>
+                </div>
+        </div>
+        <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Share Token</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img class="img-fluid mb-3" id="shareModalQr" alt="QR Code" />
+                        <input id="shareLinkInput" class="form-control" readonly />
+                        <p class="mt-2">Scan the QR code or open the link on your mobile device.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>
 <script>
     var baseUrlAll = "' . $baseUrlIp . $baseUrl . '";
