@@ -1,4 +1,8 @@
 cd /app/web
+if [ ! -f .env ]; then
+    echo '.env file missing'
+    exit
+fi
 if [ ! $USERNAME ] || [ ! $PASSWORD ]; then
     echo 'USERNAME OR PASSWORD IS NOT SET'
     exit
@@ -6,6 +10,10 @@ fi
 if [ ! $BASE_URL ]; then
     echo 'BASE_URL Is not set, defaults to /vpnHood'
     export BASE_URL=/vpnHood
+fi
+if [[ "$BASE_URL" != /* ]]; then
+    BASE_URL="/$BASE_URL"
+    export BASE_URL
 fi
 if [ $HOST_PUBLIC_IP ]; then
     if [ $HOST_PORT ]; then

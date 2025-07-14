@@ -20,7 +20,9 @@ function generateToken(id){
 
 function deleteToken(id){
     event.preventDefault()
-    deleteTokenFromServer(id)
+    if(confirm('Delete this token?')){
+        deleteTokenFromServer(id)
+    }
 }
 function deleteTokenFromServer(id) {
     let url = baseUrlAll+'?delete=' + id

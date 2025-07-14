@@ -7,12 +7,12 @@ $baseUrlIp = 'http://' . $_SERVER["SERVER_NAME"] . ':' . $_SERVER["SERVER_PORT"]
 checkTheAllowedUri($baseUrl);
 login();
 
-if ($_GET['printtoken']) {
-    printToken(escapeshellcmd(escapeshellarg($_GET['printtoken'])));
-} elseif ($_GET['gen']) {
-    gen(escapeshellarg($_GET['tokenName']));
-} elseif ($_GET['delete']) {
-    delete(escapeshellcmd(escapeshellarg($_GET['delete'])));
+if (isset($_GET['printtoken'])) {
+    printToken($_GET['printtoken']);
+} elseif (isset($_GET['gen'])) {
+    gen($_GET['tokenName'] ?? '');
+} elseif (isset($_GET['delete'])) {
+    delete($_GET['delete']);
 } else {
     getHtmlBodyAndTags($baseUrl, $baseUrlIp);
 }
@@ -33,19 +33,19 @@ function login()
 
 function printToken($id)
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . $id);
+    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
     echo getToken($output);
 }
 
 function gen($name = 'Reza Server')
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer gen -name="' . $name . '"');
+    $output = shell_exec('cd ../ && /app/VpnHoodServer gen -name=' . escapeshellarg($name));
     echo getToken($output);
 }
 
 function delete($id)
 {
-    echo shell_exec('rm ../storage/access/' . $id . '*');
+    echo shell_exec('rm ../storage/access/' . escapeshellarg($id) . '*');
 }
 
 function getToken($output)
@@ -129,6 +129,9 @@ function showCardsForTokens()
 {
     $dir = '../storage/access/';
     $files = listFilesSortedByDate($dir);
+    if (!$files) {
+        return '<p>No tokens found.</p>';
+    }
     foreach ($files as $file) {
         if (is_file($dir . $file) && strpos($file, '.token') !== false) {
             $id = str_replace('.token', '', $file);
