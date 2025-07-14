@@ -76,6 +76,13 @@ function showTokenBox(id,token){
     }
 }
 
+function openShareModal(id){
+    document.getElementById('shareModalQr').src = baseUrlAll+'?shareqr='+id
+    document.getElementById('shareLinkInput').value = baseUrlAll+'?share='+id
+    var modal = new bootstrap.Modal(document.getElementById('shareModal'))
+    modal.show()
+}
+
 function copyText(id) {
     // Get the text field
     var copyText = document.getElementById(id);
