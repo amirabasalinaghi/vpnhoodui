@@ -74,7 +74,18 @@ function shareTokenPage($id, $baseUrl, $baseUrlIp)
         . '<p id="shareToken" class="mb-3">' . htmlspecialchars($token) . '</p>'
         . '<p class="text-muted">Tap and hold to copy on mobile devices.</p>'
         . '</div>'
-        . '<script>function copy(){navigator.clipboard.writeText(document.getElementById("shareToken").innerText);alert("Copied");}</script>'
+        . '<script>
+            function copy(){
+                var text=document.getElementById("shareToken").innerText;
+                if(!navigator.clipboard||!navigator.clipboard.writeText){
+                    alert("Clipboard access was denied. Please copy the token manually.");
+                    return;
+                }
+                navigator.clipboard.writeText(text)
+                    .then(function(){alert("Copied");})
+                    .catch(function(){alert("Clipboard access was denied. Please copy the token manually.");});
+            }
+        </script>'
         . '</body></html>';
     die();
 }
@@ -170,7 +181,7 @@ function getBootstrapCard($tokenInfo, $id)
                         </div>
                                             <p class="card-text d-none" id="' . $id . '" ></p>
                                             <img class="img-fluid d-none" id="' . $id . '_qr" alt="QR Code" />
-                                            <a class="btn btn-info d-none" onclick="copyText(\'' . $id . '\')" id="' . $id . '_cpbtn"> Copy To Clipboard</a>
+                                            <a class="btn btn-info d-none copy-btn" onclick="copyText(\'' . $id . '\')" id="' . $id . '_cpbtn"> Copy To Clipboard</a>
                     </div>
                                 </div>
                         </div>';
@@ -206,10 +217,11 @@ function getHtmlHeader()
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
-	      integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css"
-	      integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+              integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css"
+              integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+        <link rel="stylesheet" href="style.css">
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
 	        integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
 	        crossorigin="anonymous"></script>
@@ -240,7 +252,7 @@ function getGenerateButton()
                         </div>
                                             <p class="card-text d-none" id="new_code" ></p>
                                             <img class="img-fluid d-none" id="new_code_qr" alt="QR Code" />
-                                            <a class="btn btn-info d-none" onclick="copyText(\'new_code\')" id="new_code_cpbtn"> Copy To Clipboard</a>
+                                            <a class="btn btn-info d-none copy-btn" onclick="copyText(\'new_code\')" id="new_code_cpbtn"> Copy To Clipboard</a>
                 </div>
 			</div>
 		</form>

@@ -88,15 +88,20 @@ function copyText(id) {
     var copyText = document.getElementById(id);
 
     // Copy the text inside the text field
-    if (!navigator.clipboard){
-        unsecuredCopyToClipboard(copyText.innerText)
-    }else{
-        navigator.clipboard.writeText(copyText.innerText);
+    if (!navigator.clipboard || !navigator.clipboard.writeText){
+        unsecuredCopyToClipboard(copyText.innerText);
+        alert("Copied the text: " + copyText.innerText);
+        window.location.reload();
+        return;
     }
-
-    // Alert the copied text
-    alert("Copied the text: " + copyText.innerText);
-    window.location.reload();
+    navigator.clipboard.writeText(copyText.innerText)
+        .then(function(){
+            alert("Copied the text: " + copyText.innerText);
+            window.location.reload();
+        })
+        .catch(function(){
+            alert("Clipboard access was denied. Please copy the token manually.");
+        });
 
 }
 
