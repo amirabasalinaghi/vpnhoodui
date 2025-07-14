@@ -15,7 +15,12 @@ login();
 if (isset($_GET['printtoken'])) {
     printToken($_GET['printtoken']);
 } elseif (isset($_GET['gen'])) {
-    gen($_GET['tokenName'] ?? '', $_GET['expire'] ?? null);
+    gen(
+        $_GET['tokenName'] ?? '',
+        $_GET['expire'] ?? null,
+        $_GET['uploadLimit'] ?? null,
+        $_GET['downloadLimit'] ?? null
+    );
 } elseif (isset($_GET['qrcode'])) {
     printQrCode($_GET['qrcode']);
 } elseif (isset($_GET['shareqr'])) {
@@ -90,14 +95,30 @@ function shareTokenPage($id, $baseUrl, $baseUrlIp)
     die();
 }
 
-function gen($name = 'Reza Server', $expire = null)
+function gen($name = 'Reza Server', $expire = null, $uploadLimit = null, $downloadLimit = null)
 {
     $cmd = 'cd ../ && /app/VpnHoodServer gen -name=' . escapeshellarg($name);
     if ($expire) {
         $cmd .= ' -expire=' . escapeshellarg($expire);
     }
     $output = shell_exec($cmd);
-    echo getToken($output);
+    $token = getToken($output);
+
+    // determine the latest generated token id
+    $dir = '../storage/access/';
+    $id = getLastTokenId($dir);
+    if ($id && ($uploadLimit || $downloadLimit)) {
+        $limitData = [];
+        if ($uploadLimit) {
+            $limitData['upload'] = (int)$uploadLimit * 1024 * 1024;
+        }
+        if ($downloadLimit) {
+            $limitData['download'] = (int)$downloadLimit * 1024 * 1024;
+        }
+        file_put_contents($dir . $id . '.limit', json_encode($limitData));
+    }
+
+    echo $token;
 }
 
 function delete($id)
@@ -133,20 +154,47 @@ function listFilesSortedByDate($dir)
     return ($files) ? $files : false;
 }
 
+function getLastTokenId($dir)
+{
+    $files = listFilesSortedByDate($dir);
+    if (!$files) {
+        return null;
+    }
+    foreach ($files as $file) {
+        if (is_file($dir . $file) && strpos($file, '.token') !== false) {
+            return str_replace('.token', '', $file);
+        }
+    }
+    return null;
+}
+
 function getTokenInfo(string $dir, $id)
 {
     $tokenContent = file_get_contents($dir . $id . '.token');
     $usageContent = file_get_contents($dir . $id . '.usage');
+    $limitFile = $dir . $id . '.limit';
     $tokenInfo = json_decode($tokenContent, true);
     $usageInfo = json_decode($usageContent, true);
+    $limitInfo = [];
+    if (is_file($limitFile)) {
+        $limitInfo = json_decode(file_get_contents($limitFile), true);
+    }
     $tokenName = $tokenInfo['Token']['name'] ?? $tokenInfo['Name'] ?? 'NO NAME';
     $expireRaw = $tokenInfo['ExpirationTime'] ?? $tokenInfo['Token']['ExpirationTime'] ?? null;
     $expire = $expireRaw ? date('Y-m-d', strtotime($expireRaw)) : 'Never';
+    $uploadUsed = $usageInfo['SentTraffic'] ?? 0;
+    $downloadUsed = $usageInfo['ReceivedTraffic'] ?? 0;
+    $uploadLimit = $limitInfo['upload'] ?? 0;
+    $downloadLimit = $limitInfo['download'] ?? 0;
+    $remainingUpload = $uploadLimit ? max($uploadLimit - $uploadUsed, 0) : 0;
+    $remainingDownload = $downloadLimit ? max($downloadLimit - $downloadUsed, 0) : 0;
     return [
         'name' => $tokenName,
         'upload' => humanFileSize($usageInfo['SentTraffic']),
         'download' => humanFileSize($usageInfo['ReceivedTraffic']),
         'expiration' => $expire,
+        'remaining_upload' => $uploadLimit ? humanFileSize($remainingUpload) : 'Unlimited',
+        'remaining_download' => $downloadLimit ? humanFileSize($remainingDownload) : 'Unlimited',
     ];
 }
 
@@ -172,6 +220,7 @@ function getBootstrapCard($tokenInfo, $id)
                                         <p class="card-text">' . $id . '</p>
                                         <p class="card-text">Expires: <strong>' . $tokenInfo['expiration'] . '</strong></p>
                                         <p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
+                                        <p class="card-text">Remaining Download: <strong>' . $tokenInfo['remaining_download'] . '</strong> Remaining Upload: <strong>' . $tokenInfo['remaining_upload'] . '</strong></p>
                                         <a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
                                         <button type="button" class="btn btn-secondary ms-1" onclick="openShareModal(\'' . $id . '\')">Share</button>
                                         <a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
@@ -243,6 +292,14 @@ function getGenerateButton()
                         <div class="col-auto">
                                 <label for="expire" class="visually-hidden">Expiration</label>
                                 <input name="expire" type="date" class="form-control" id="expire" placeholder="YYYY/MM/DD">
+                        </div>
+                        <div class="col-auto">
+                                <label for="uploadLimit" class="visually-hidden">Upload Limit (MB)</label>
+                                <input name="uploadLimit" type="number" class="form-control" id="uploadLimit" placeholder="Upload MB">
+                        </div>
+                        <div class="col-auto">
+                                <label for="downloadLimit" class="visually-hidden">Download Limit (MB)</label>
+                                <input name="downloadLimit" type="number" class="form-control" id="downloadLimit" placeholder="Download MB">
                         </div>
                         <div class="col-auto">
                                 <button type="submit" class="btn btn-primary mb-3" onclick="generateToken(\'new_code\')">Generate Token</button>

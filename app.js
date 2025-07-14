@@ -51,7 +51,9 @@ function getTokenFromServer(id, gen=false){
     if (gen){
         let tokenName = document.getElementById('tokenName').value
         let expire = document.getElementById('expire').value
-        url = baseUrlAll+'?gen=1&tokenName='+encodeURIComponent(tokenName)+'&expire='+encodeURIComponent(expire)
+        let uploadLimit = document.getElementById('uploadLimit').value
+        let downloadLimit = document.getElementById('downloadLimit').value
+        url = baseUrlAll+'?gen=1&tokenName='+encodeURIComponent(tokenName)+'&expire='+encodeURIComponent(expire)+'&uploadLimit='+encodeURIComponent(uploadLimit)+'&downloadLimit='+encodeURIComponent(downloadLimit)
     }
     document.getElementById(id+'_spinner').classList.remove("d-none")
 
