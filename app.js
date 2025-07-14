@@ -5,6 +5,10 @@ function getToken(id){
     }else{
         document.getElementById(id).classList.add("d-none")
         document.getElementById(id+'_cpbtn').classList.add("d-none")
+        if(document.getElementById(id+'_qr')){
+            document.getElementById(id+'_qr').classList.add("d-none")
+            document.getElementById(id+'_qr').removeAttribute('src')
+        }
     }
 }
 
@@ -15,6 +19,10 @@ function generateToken(id){
     }else{
         document.getElementById(id).classList.add("d-none")
         document.getElementById(id+'_cpbtn').classList.add("d-none")
+        if(document.getElementById(id+'_qr')){
+            document.getElementById(id+'_qr').classList.add("d-none")
+            document.getElementById(id+'_qr').removeAttribute('src')
+        }
     }
 }
 
@@ -62,6 +70,10 @@ function showTokenBox(id,token){
     document.getElementById(id+'_spinner').classList.add("d-none")
     document.getElementById(id).classList.remove("d-none")
     document.getElementById(id+'_cpbtn').classList.remove("d-none")
+    if(document.getElementById(id+'_qr')){
+        document.getElementById(id+'_qr').src = baseUrlAll+'?qrcode='+id
+        document.getElementById(id+'_qr').classList.remove('d-none')
+    }
 }
 
 function copyText(id) {
