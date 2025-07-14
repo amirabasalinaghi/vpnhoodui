@@ -106,7 +106,7 @@ function humanFileSize($size, $unit = "")
 
 function getBootstrapCard($tokenInfo, $id)
 {
-    return '<div class="card">
+    return '<div class="card token-card">
 				<div class="card-body">
 					<h5 class="card-title">' . $tokenInfo['name'] . '</h5>
 					<p class="card-text">' . $id . '</p>
@@ -185,7 +185,15 @@ function getGenerateButton()
                 </div>
 			</div>
 		</form>
-	</div>';
+        </div>';
+}
+
+function getSearchBox()
+{
+    return '<div class="row mb-3">'
+        . '<input type="text" id="searchInput" class="form-control" '
+        . 'placeholder="Search token" onkeyup="filterTokens()">'
+        . '</div>';
 }
 
 function getHtmlBodyAndTags($baseUrl, $baseUrlIp)
@@ -193,13 +201,15 @@ function getHtmlBodyAndTags($baseUrl, $baseUrlIp)
     echo getHtmlHeader() . '
 <body>
 <div class="container">
-	<div class="row">
-		<h1 class="h1"><a href="' . $baseUrl . '">Home</a></h1>
-	</div>
-	' . getGenerateButton() . '
-	<div class="row">
-		<div class="col-sm-6">
-			' . showCardsForTokens() . '
+        <div class="row mb-3">
+                <h1 class="h1"><a href="' . $baseUrl . '">Home</a></h1>
+                <a href="' . $baseUrl . '/logout" class="btn btn-secondary ms-3">Logout</a>
+        </div>
+        ' . getGenerateButton() . '
+        ' . getSearchBox() . '
+        <div class="row">
+                <div class="col-sm-6">
+                        ' . showCardsForTokens() . '
 		</div>
 	</div>
 </div>
@@ -222,7 +232,7 @@ function checkTheAllowedUri($baseUrl)
     if ($_SERVER['REQUEST_URI'] !== $allowedUri
         && $_SERVER['REQUEST_URI']!== $baseUrl.'/login'
     ) {
-        header('Location: ');
+        header('Location: ' . $baseUrl);
         die();
     }
 

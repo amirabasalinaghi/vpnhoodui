@@ -22,7 +22,6 @@ if ($_POST['username']) {
     die();
 }
 
-echo getHtmlHeader();
 getHtmlBodyAndTagsLogin($baseUrl);
 
 
@@ -34,11 +33,11 @@ function getHtmlBodyAndTagsLogin($baseUrl)
 	<div class="row">
 		<h1 class="h1"><a href="' . $baseUrl . '">Home</a></h1>
 	</div>
-	<form class="form-group" method="post" action="' . $baseUrl . '/login">
-	  <input type="text" name="username" id="test" class="form-control" placeholder="test" aria-describedby="helpId">
-	  <input type="password" name="password" id="test" class="form-control" placeholder="test" aria-describedby="helpId">
-	  <button type="submit" >Login</button>
-	</form>
+        <form class="form-group" method="post" action="' . $baseUrl . '/login">
+          <input type="text" name="username" id="username" class="form-control" placeholder="Username" aria-describedby="helpId">
+          <input type="password" name="password" id="password" class="form-control" placeholder="Password" aria-describedby="helpId">
+          <button type="submit" >Login</button>
+        </form>
 	
 </div>
 </body>

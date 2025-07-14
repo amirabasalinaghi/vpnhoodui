@@ -91,3 +91,15 @@ function unsecuredCopyToClipboard(text) {
     }
     document.body.removeChild(textArea);
 }
+
+function filterTokens(){
+    var value = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.token-card').forEach(function(card){
+        var title = card.querySelector('.card-title').innerText.toLowerCase();
+        if(title.includes(value)){
+            card.classList.remove('d-none');
+        }else{
+            card.classList.add('d-none');
+        }
+    });
+}
