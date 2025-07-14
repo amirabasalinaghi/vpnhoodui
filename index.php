@@ -11,6 +11,8 @@ if (isset($_GET['printtoken'])) {
     printToken($_GET['printtoken']);
 } elseif (isset($_GET['gen'])) {
     gen($_GET['tokenName'] ?? '', $_GET['expire'] ?? null);
+} elseif (isset($_GET['qrcode'])) {
+    printQrCode($_GET['qrcode']);
 } elseif (isset($_GET['delete'])) {
     delete($_GET['delete']);
 } else {
@@ -35,6 +37,16 @@ function printToken($id)
 {
     $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
     echo getToken($output);
+}
+
+function printQrCode($id)
+{
+    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
+    $token = getToken($output);
+    require_once __DIR__ . '/lib/phpqrcode/qrlib.php';
+    header('Content-Type: image/svg+xml');
+    echo QRcode::svg($token, false, QR_ECLEVEL_L, 3, 4, false);
+    die();
 }
 
 function gen($name = 'Reza Server', $expire = null)
@@ -119,18 +131,18 @@ function getBootstrapCard($tokenInfo, $id)
                                         <p class="card-text">' . $id . '</p>
                                         <p class="card-text">Expires: <strong>' . $tokenInfo['expiration'] . '</strong></p>
                                         <p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
-                                        <p class="card-text">' . $id . '</p>
-					<a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
+                                        <a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
 					<a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
-					<div class="card-text" >
-					    <div class="spinner-border text-primary d-none" id="' . $id . '_spinner" role="status">
+                                        <div class="card-text" >
+                                            <div class="spinner-border text-primary d-none" id="' . $id . '_spinner" role="status">
                             <span class="sr-only"></span>
                         </div>
-					    <p class="card-text d-none" id="' . $id . '" ></p>
-					    <a class="btn btn-info d-none" onclick="copyText(\'' . $id . '\')" id="' . $id . '_cpbtn"> Copy To Clipboard</a>
+                                            <p class="card-text d-none" id="' . $id . '" ></p>
+                                            <img class="img-fluid d-none" id="' . $id . '_qr" alt="QR Code" />
+                                            <a class="btn btn-info d-none" onclick="copyText(\'' . $id . '\')" id="' . $id . '_cpbtn"> Copy To Clipboard</a>
                     </div>
-				</div>
-			</div>';
+                                </div>
+                        </div>';
 }
 
 function showCardsForTokens()
@@ -195,8 +207,9 @@ function getGenerateButton()
                                             <div class="spinner-border text-primary d-none" id="new_code_spinner" role="status">
                             <span class="sr-only"></span>
                         </div>
-					    <p class="card-text d-none" id="new_code" ></p>
-					    <a class="btn btn-info d-none" onclick="copyText(\'new_code\')" id="new_code_cpbtn"> Copy To Clipboard</a>
+                                            <p class="card-text d-none" id="new_code" ></p>
+                                            <img class="img-fluid d-none" id="new_code_qr" alt="QR Code" />
+                                            <a class="btn btn-info d-none" onclick="copyText(\'new_code\')" id="new_code_cpbtn"> Copy To Clipboard</a>
                 </div>
 			</div>
 		</form>
