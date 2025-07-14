@@ -10,7 +10,7 @@ login();
 if (isset($_GET['printtoken'])) {
     printToken($_GET['printtoken']);
 } elseif (isset($_GET['gen'])) {
-    gen($_GET['tokenName'] ?? '');
+    gen($_GET['tokenName'] ?? '', $_GET['expire'] ?? null);
 } elseif (isset($_GET['delete'])) {
     delete($_GET['delete']);
 } else {
@@ -37,9 +37,13 @@ function printToken($id)
     echo getToken($output);
 }
 
-function gen($name = 'Reza Server')
+function gen($name = 'Reza Server', $expire = null)
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer gen -name=' . escapeshellarg($name));
+    $cmd = 'cd ../ && /app/VpnHoodServer gen -name=' . escapeshellarg($name);
+    if ($expire) {
+        $cmd .= ' -expire=' . escapeshellarg($expire);
+    }
+    $output = shell_exec($cmd);
     echo getToken($output);
 }
 
@@ -82,11 +86,14 @@ function getTokenInfo(string $dir, $id)
     $usageContent = file_get_contents($dir . $id . '.usage');
     $tokenInfo = json_decode($tokenContent, true);
     $usageInfo = json_decode($usageContent, true);
-    $tokenName = $tokenInfo['Token']['name'] ?? 'NO NAME';
+    $tokenName = $tokenInfo['Token']['name'] ?? $tokenInfo['Name'] ?? 'NO NAME';
+    $expireRaw = $tokenInfo['ExpirationTime'] ?? $tokenInfo['Token']['ExpirationTime'] ?? null;
+    $expire = $expireRaw ? date('Y-m-d', strtotime($expireRaw)) : 'Never';
     return [
         'name' => $tokenName,
         'upload' => humanFileSize($usageInfo['SentTraffic']),
         'download' => humanFileSize($usageInfo['ReceivedTraffic']),
+        'expiration' => $expire,
     ];
 }
 
@@ -107,11 +114,12 @@ function humanFileSize($size, $unit = "")
 function getBootstrapCard($tokenInfo, $id)
 {
     return '<div class="card token-card">
-				<div class="card-body">
-					<h5 class="card-title">' . $tokenInfo['name'] . '</h5>
-					<p class="card-text">' . $id . '</p>
-					<p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
-					<p class="card-text">' . $id . '</p>
+                                <div class="card-body">
+                                        <h5 class="card-title">' . $tokenInfo['name'] . '</h5>
+                                        <p class="card-text">' . $id . '</p>
+                                        <p class="card-text">Expires: <strong>' . $tokenInfo['expiration'] . '</strong></p>
+                                        <p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
+                                        <p class="card-text">' . $id . '</p>
 					<a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
 					<a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
 					<div class="card-text" >
@@ -172,15 +180,19 @@ function getHtmlHeader()
 function getGenerateButton()
 {
     return '<div class="row">
-		<form class="row g-3" action="?gen=1" METHOD="get">
-			<div class="col-auto">
-				<label for="tokenName" class="visually-hidden">Give a Token Name</label>
-				<input name="tokenName" type="text" class="form-control" id="tokenName" placeholder="Token Name">
-			</div>
-			<div class="col-auto">
-				<button type="submit" class="btn btn-primary mb-3" onclick="generateToken(\'new_code\')">Generate Token</button>
-				<div class="card-text" >
-					    <div class="spinner-border text-primary d-none" id="new_code_spinner" role="status">
+                <form class="row g-3" action="?gen=1" METHOD="get">
+                        <div class="col-auto">
+                                <label for="tokenName" class="visually-hidden">Give a Token Name</label>
+                                <input name="tokenName" type="text" class="form-control" id="tokenName" placeholder="Token Name">
+                        </div>
+                        <div class="col-auto">
+                                <label for="expire" class="visually-hidden">Expiration</label>
+                                <input name="expire" type="date" class="form-control" id="expire" placeholder="YYYY/MM/DD">
+                        </div>
+                        <div class="col-auto">
+                                <button type="submit" class="btn btn-primary mb-3" onclick="generateToken(\'new_code\')">Generate Token</button>
+                                <div class="card-text" >
+                                            <div class="spinner-border text-primary d-none" id="new_code_spinner" role="status">
                             <span class="sr-only"></span>
                         </div>
 					    <p class="card-text d-none" id="new_code" ></p>

@@ -42,7 +42,8 @@ function getTokenFromServer(id, gen=false){
     let url = baseUrlAll+'?printtoken='+id
     if (gen){
         let tokenName = document.getElementById('tokenName').value
-        url = baseUrlAll+'?gen=1&tokenName='+tokenName
+        let expire = document.getElementById('expire').value
+        url = baseUrlAll+'?gen=1&tokenName='+encodeURIComponent(tokenName)+'&expire='+encodeURIComponent(expire)
     }
     document.getElementById(id+'_spinner').classList.remove("d-none")
 
