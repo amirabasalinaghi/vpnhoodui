@@ -6,7 +6,7 @@ $baseUrl = getenv('BASE_URL');
 $userName = getenv('USERNAME');
 $password = getenv('PASSWORD');
 
-if ($_POST['username']) {
+if (isset($_POST['username'])) {
     $postUser = escapeshellcmd($_POST['username']);
     $postPass = escapeshellcmd($_POST['password']);
     if (
