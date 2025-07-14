@@ -44,16 +44,34 @@ function login()
     }
 }
 
+function runVpnHoodServer(array $args)
+{
+    $process = proc_open(
+        array_merge(['/app/VpnHoodServer'], $args),
+        [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $pipes,
+        realpath('..')
+    );
+    if (!is_resource($process)) {
+        return '';
+    }
+    $output = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    proc_close($process);
+    return $output;
+}
+
 
 function printToken($id)
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
+    $output = runVpnHoodServer(['print', $id]);
     echo getToken($output);
 }
 
 function printQrCode($id)
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
+    $output = runVpnHoodServer(['print', $id]);
     $token = getToken($output);
     require_once __DIR__ . '/lib/phpqrcode/qrlib.php';
     header('Content-Type: image/svg+xml');
@@ -72,7 +90,7 @@ function printShareQrCode($id, $baseUrl, $baseUrlIp)
 
 function shareTokenPage($id, $baseUrl, $baseUrlIp)
 {
-    $output = shell_exec('cd ../ && /app/VpnHoodServer print ' . escapeshellarg($id));
+    $output = runVpnHoodServer(['print', $id]);
     $token = getToken($output);
     echo getHtmlHeader() . '<body><div class="container text-center mt-4">'
         . '<h3>VPN Token</h3>'
@@ -97,11 +115,11 @@ function shareTokenPage($id, $baseUrl, $baseUrlIp)
 
 function gen($name = 'Reza Server', $expire = null, $uploadLimit = null, $downloadLimit = null)
 {
-    $cmd = 'cd ../ && /app/VpnHoodServer gen -name=' . escapeshellarg($name);
+    $args = ['gen', '-name=' . $name];
     if ($expire) {
-        $cmd .= ' -expire=' . escapeshellarg($expire);
+        $args[] = '-expire=' . $expire;
     }
-    $output = shell_exec($cmd);
+    $output = runVpnHoodServer($args);
     $token = getToken($output);
 
     // determine the latest generated token id
@@ -123,7 +141,13 @@ function gen($name = 'Reza Server', $expire = null, $uploadLimit = null, $downlo
 
 function delete($id)
 {
-    echo shell_exec('rm ../storage/access/' . escapeshellarg($id) . '*');
+    $base = basename($id);
+    $dir = realpath('../storage/access');
+    foreach (glob($dir . '/' . $base . '*') as $file) {
+        if (strpos(realpath($file), $dir) === 0 && is_file($file)) {
+            unlink($file);
+        }
+    }
 }
 
 function getToken($output)
@@ -214,23 +238,25 @@ function humanFileSize($size, $unit = "")
 
 function getBootstrapCard($tokenInfo, $id)
 {
+    $safeName = htmlspecialchars($tokenInfo['name'], ENT_QUOTES, 'UTF-8');
+    $safeId = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
     return '<div class="card token-card">
                                 <div class="card-body">
-                                        <h5 class="card-title">' . $tokenInfo['name'] . '</h5>
-                                        <p class="card-text">' . $id . '</p>
+                                        <h5 class="card-title">' . $safeName . '</h5>
+                                        <p class="card-text">' . $safeId . '</p>
                                         <p class="card-text">Expires: <strong>' . $tokenInfo['expiration'] . '</strong></p>
                                         <p class="card-text">Downloaded: <strong>' . $tokenInfo['download'] . '</strong> Uploaded: <strong>' . $tokenInfo['upload'] . '</strong></p>
                                         <p class="card-text">Remaining Download: <strong>' . $tokenInfo['remaining_download'] . '</strong> Remaining Upload: <strong>' . $tokenInfo['remaining_upload'] . '</strong></p>
-                                        <a href="?printtoken=' . $id . '" class="btn btn-primary" onclick="getToken(\'' . $id . '\')">Show Token</a>
-                                        <button type="button" class="btn btn-secondary ms-1" onclick="openShareModal(\'' . $id . '\')">Share</button>
-                                        <a href="?delete=' . $id . '" class="btn " onclick="deleteToken(\'' . $id . '\')"><i class="bi bi-trash text-danger"></i></a>
+                                        <a href="?printtoken=' . $safeId . '" class="btn btn-primary" onclick="getToken(\'' . $safeId . '\')">Show Token</a>
+                                        <button type="button" class="btn btn-secondary ms-1" onclick="openShareModal(\'' . $safeId . '\')">Share</button>
+                                        <a href="?delete=' . $safeId . '" class="btn " onclick="deleteToken(\'' . $safeId . '\')"><i class="bi bi-trash text-danger"></i></a>
                                         <div class="card-text" >
-                                            <div class="spinner-border text-primary d-none" id="' . $id . '_spinner" role="status">
+                                            <div class="spinner-border text-primary d-none" id="' . $safeId . '_spinner" role="status">
                             <span class="sr-only"></span>
                         </div>
-                                            <p class="card-text d-none" id="' . $id . '" ></p>
-                                            <img class="img-fluid d-none" id="' . $id . '_qr" alt="QR Code" />
-                                            <a class="btn btn-info d-none copy-btn" onclick="copyText(\'' . $id . '\')" id="' . $id . '_cpbtn"> Copy To Clipboard</a>
+                                            <p class="card-text d-none" id="' . $safeId . '" ></p>
+                                            <img class="img-fluid d-none" id="' . $safeId . '_qr" alt="QR Code" />
+                                            <a class="btn btn-info d-none copy-btn" onclick="copyText(\'' . $safeId . '\')" id="' . $safeId . '_cpbtn"> Copy To Clipboard</a>
                     </div>
                                 </div>
                         </div>';
