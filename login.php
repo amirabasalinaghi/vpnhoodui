@@ -3,6 +3,10 @@
 session_start();
 $baseUrl = getenv('BASE_URL');
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 $userName = getenv('USERNAME');
 $password = getenv('PASSWORD');
 
@@ -31,6 +35,11 @@ if (isset($_SESSION['login_block_until']) && $_SESSION['login_block_until'] > ti
 }
 
 if (isset($_POST['username'])) {
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $_SESSION['error'] = 'Invalid request.';
+        header('Location: ' . $baseUrl . '/login');
+        die();
+    }
     if (time() - $_SESSION['first_attempt_time'] > $attemptWindow) {
         $_SESSION['login_attempts'] = 0;
         $_SESSION['first_attempt_time'] = time();
@@ -76,6 +85,7 @@ function getHtmlBodyAndTagsLogin($baseUrl, $error = '')
         echo '<div class="alert alert-danger" role="alert">' . htmlspecialchars($error) . '</div>';
     }
     echo '<form class="form-group" method="post" action="' . $baseUrl . '/login">
+          <input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') . '">
           <input type="text" name="username" id="username" class="form-control" placeholder="Username" aria-describedby="helpId">
           <input type="password" name="password" id="password" class="form-control" placeholder="Password" aria-describedby="helpId">
           <button type="submit" >Login</button>

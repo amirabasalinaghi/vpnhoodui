@@ -19,6 +19,10 @@ Keep this URL for yourself and don't share your username and password.
 
 `` git clone https://github.com/timusup-team/vpnhoodui .``
 
+Copy `\.env.example` to `\.env` and edit the values to match your environment.
+
+``cp .env.example .env``
+
 ``./setup.sh``
 
 ## Method 2) Running docker yourself (for advanced users)
@@ -28,7 +32,7 @@ Keep this URL for yourself and don't share your username and password.
 
 ### Run php builtin server:
 
-#### DON'T forget to add your server ip to the .env file!!!!
+#### Copy `\.env.example` to `\.env` and set your server IP and credentials
 (!) The BASE_URL should start with / in the beginning.
 
 ``docker exec -d MyVpnHoodServer  bash /app/web/runui.sh``
